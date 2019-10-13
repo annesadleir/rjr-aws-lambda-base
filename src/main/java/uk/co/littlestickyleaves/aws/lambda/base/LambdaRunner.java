@@ -1,8 +1,8 @@
 package uk.co.littlestickyleaves.aws.lambda.base;
 
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandler;
+import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandlerFactory;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaInputWithId;
-import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaException;
 
 public class LambdaRunner<T extends LambdaWorker> {
 
@@ -13,6 +13,10 @@ public class LambdaRunner<T extends LambdaWorker> {
     public LambdaRunner(LambdaIOHandler lambdaIOHandler, T lambdaWorker) {
         this.lambdaIOHandler = lambdaIOHandler;
         this.lambdaWorker = lambdaWorker;
+    }
+
+    public LambdaRunner(T lambdaWorker) {
+        this(LambdaIOHandlerFactory.simple(), lambdaWorker);
     }
 
     public void loop() throws Exception {
