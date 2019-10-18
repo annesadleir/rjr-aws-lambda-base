@@ -12,14 +12,17 @@ public class LambdaInputWithIdTest {
     @Test
     public void jacksonJrRoundTripToCheckPojoAcceptable() throws IOException {
         // arrange
+        JSON json = JSON.std;
         LambdaInputWithId lambdaInputWithId = new LambdaInputWithId("id", "input");
 
         // act
-        String serialized = JSON.std.asString(lambdaInputWithId);
-        LambdaInputWithId deserialized = JSON.std.beanFrom(LambdaInputWithId.class, serialized);
+        String serialized = json.asString(lambdaInputWithId);
+        LambdaInputWithId deserialized =json.beanFrom(LambdaInputWithId.class, serialized);
+        String reserialized = json.asString(deserialized);
 
         // assert
         assertEquals(lambdaInputWithId.getAwsRequestId(), deserialized.getAwsRequestId());
         assertEquals(lambdaInputWithId.getRawInput(), deserialized.getRawInput());
+        assertEquals(serialized, reserialized);
     }
 }

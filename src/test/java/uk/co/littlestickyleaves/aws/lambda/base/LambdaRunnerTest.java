@@ -6,7 +6,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandler;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaInputWithId;
-import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaException;
+import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
 import static org.mockito.Mockito.*;
 

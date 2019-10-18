@@ -4,6 +4,11 @@ import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandler;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandlerFactory;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaInputWithId;
 
+/**
+ * This class ia the core class for the runtime.
+ * To start the runtime, create one of these and call loop() on it.
+ * @param <T> it is parameterised on a specific implementation of LambdaWorker
+ */
 public class LambdaRunner<T extends LambdaWorker> {
 
     private final LambdaIOHandler lambdaIOHandler;

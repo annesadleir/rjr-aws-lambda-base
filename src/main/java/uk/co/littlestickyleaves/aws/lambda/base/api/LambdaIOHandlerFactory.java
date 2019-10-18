@@ -1,5 +1,10 @@
 package uk.co.littlestickyleaves.aws.lambda.base.api;
 
+import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonProvider;
+
+/**
+ * A simple factory to provide a LambdaIOHandler.
+ */
 public class LambdaIOHandlerFactory {
 
     public static LambdaIOHandler simple() {

@@ -9,6 +9,9 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonProvider;
+import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonShape;
+import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
 import java.io.IOException;
 
@@ -17,7 +20,8 @@ import static org.junit.Assert.*;
 
 /**
  * Tests an implementation of LambdaIOHandler to see that it fulfils the Open API specification.
- * Available in the test/resources folder, downloaded Oct 2019 from https://docs.aws.amazon.com/lambda/latest/dg/samples/runtime-api.zip
+ * Specification is available in the test/resources folder, downloaded Oct 2019 from
+ * https://docs.aws.amazon.com/lambda/latest/dg/samples/runtime-api.zip
  */
 public class LambdaIOHandlerTest {
 

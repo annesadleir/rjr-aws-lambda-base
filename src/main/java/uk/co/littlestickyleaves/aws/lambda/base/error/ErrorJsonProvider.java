@@ -1,4 +1,4 @@
-package uk.co.littlestickyleaves.aws.lambda.base.api;
+package uk.co.littlestickyleaves.aws.lambda.base.error;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 
@@ -8,7 +8,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Class which can turn an Exception into the sort of json String required by the AWS Lambda API
+ * Class which can turn an Exception into the sort of json String required by the AWS Lambda API.
+ * Uses the ErrorJsonShape POJO
  */
 public class ErrorJsonProvider {
 

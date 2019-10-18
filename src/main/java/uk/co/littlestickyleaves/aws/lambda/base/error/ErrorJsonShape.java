@@ -1,8 +1,10 @@
-package uk.co.littlestickyleaves.aws.lambda.base.api;
+package uk.co.littlestickyleaves.aws.lambda.base.error;
 
 import java.util.List;
 
-
+/**
+ * This POJO represents the correct shape for a JSON error message in the AWS Lambda API
+ */
 public class ErrorJsonShape {
 
     private String errorType;

@@ -1,4 +1,4 @@
-package uk.co.littlestickyleaves.aws.lambda.base.api;
+package uk.co.littlestickyleaves.aws.lambda.base.error;
 
 /**
  * An exception for when things go wrong in the Lambda

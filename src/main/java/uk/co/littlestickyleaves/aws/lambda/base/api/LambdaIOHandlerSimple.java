@@ -1,18 +1,19 @@
 package uk.co.littlestickyleaves.aws.lambda.base.api;
 
 
+import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonProvider;
+import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
+
 import java.io.*;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * An implementation of the LambdaIOHandler interface using Java 1.1's HttpUrlConnection
- * <p>
+ * An implementation of the LambdaIOHandler interface using Java 1.1's HttpUrlConnection.
+ * (I got fed up with trying various libraries which caused GraalVM to complain, so I did this old-school implementation.)
  * Q. proper logging sensible or not?
  */
 public class LambdaIOHandlerSimple implements LambdaIOHandler {

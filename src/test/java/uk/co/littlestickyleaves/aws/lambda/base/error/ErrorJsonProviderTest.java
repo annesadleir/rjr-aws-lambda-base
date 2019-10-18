@@ -1,8 +1,10 @@
-package uk.co.littlestickyleaves.aws.lambda.base.api;
+package uk.co.littlestickyleaves.aws.lambda.base.error;
 
 import com.fasterxml.jackson.jr.ob.JSON;
 import org.junit.Before;
 import org.junit.Test;
+import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonProvider;
+import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
 import java.io.IOException;
 import java.util.ArrayList;
