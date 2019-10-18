@@ -18,11 +18,11 @@ public class LambdaRunnerTest {
     private LambdaIOHandler mockLambdaIOHandler = mock(LambdaIOHandler.class);
     private LambdaWorker mockLambdaWorker = mock(LambdaWorker.class);
 
-    private LambdaRunner<LambdaWorker> testObject;
+    private LambdaRunner testObject;
 
     @Before
     public void setUp() {
-        testObject = new LambdaRunner<>(mockLambdaIOHandler, mockLambdaWorker);
+        testObject = new LambdaRunner(mockLambdaIOHandler, mockLambdaWorker);
     }
 
     @Test
