@@ -11,6 +11,8 @@ This code is not intended as a general-purpose layer which can be deployed separ
 Instead it is always intended to be used as a dependency of a specific lambda's code, and compiled into a deployment package with it.
 Therefore it can avoid using reflection to instantiate the LambdaWorker at runtime.
 
+There is a `reflect-config.json` file in `META-INF/native-image` for use with GraalVM native compilation.
+
 I used this guide as my starting point, and my code is heavily based on it (though it's not in Kotlin): \
 ['Fighting cold startup issues for your Kotlin Lambda with GraalVM' by Mathias Düsterhöft](https://medium.com/@mathiasdpunkt/fighting-cold-startup-issues-for-your-kotlin-lambda-with-graalvm-39d19b297730) \
 I also used the AWS custom runtime API definition: \
