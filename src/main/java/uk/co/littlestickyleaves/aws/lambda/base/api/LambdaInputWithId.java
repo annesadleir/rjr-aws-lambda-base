@@ -2,7 +2,6 @@ package uk.co.littlestickyleaves.aws.lambda.base.api;
 
 /**
  * A POJO to link an AWS Request Id with its corresponding input String.
- * (Default constructor and setters provided for use of Jackson Jr.)
  */
 public class LambdaInputWithId {
 
