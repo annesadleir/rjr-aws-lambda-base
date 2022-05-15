@@ -8,15 +8,16 @@ import com.github.tomakehurst.wiremock.matching.ValueMatcher;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonProvider;
 import uk.co.littlestickyleaves.aws.lambda.base.error.ErrorJsonShape;
 import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
 import java.io.IOException;
+import java.net.http.HttpClient;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * Tests an implementation of LambdaIOHandler to see that it fulfils the Open API specification.
@@ -24,9 +25,6 @@ import static org.junit.Assert.*;
  * https://docs.aws.amazon.com/lambda/latest/dg/samples/runtime-api.zip
  */
 public class LambdaIOHandlerTest {
-
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
 
     private static final String LOCALHOST = "localhost";
     private static final int HOST_PORT = 8089;
@@ -40,7 +38,8 @@ public class LambdaIOHandlerTest {
 
     @Before
     public void setUp() throws Exception {
-        testObject = new LambdaIOHandlerSimple(LOCALHOST_PORT, new ErrorJsonProvider());
+        testObject = new LambdaIOHandlerSimple(HttpClient.newHttpClient(),
+                LOCALHOST_PORT, new ErrorJsonProvider());
     }
 
     @Rule
@@ -76,12 +75,20 @@ public class LambdaIOHandlerTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withBody(lambdaInputString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("GET for input returned no header value for Lambda-Runtime-Aws-Request-Id");
+        LambdaException resultingException = null;
+        String expectedMessage = "GET for input returned no header value for Lambda-Runtime-Aws-Request-Id";
 
         // act
-        testObject.getLambdaInput();
+        try {
+            testObject.getLambdaInput();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
+
     }
 
     // 403 Forbidden -- no point in continuing
@@ -93,13 +100,20 @@ public class LambdaIOHandlerTest {
                 .willReturn(aResponse()
                         .withStatus(403)
                         .withBody(errorString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("GET for input resulted in status code 403 with message: " +
-                "'Forbidden error'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "GET for input on http://localhost:8089/2018-06-01/runtime/invocation/next resulted " +
+                "in status code 403 with message: 'Forbidden error'";
 
         // act
-        testObject.getLambdaInput();
+        try {
+            testObject.getLambdaInput();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
     }
 
     // 500 Container error -- requires exit
@@ -111,13 +125,22 @@ public class LambdaIOHandlerTest {
                 .willReturn(aResponse()
                         .withStatus(500)
                         .withBody(errorString)));
+        LambdaException resultingException = null;
 
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("GET for input resulted in status code 500 with message: " +
-                "'Container error'. Exiting with exception");
+        String expectedMessage = "GET for input on http://localhost:8089/2018-06-01/runtime/invocation/next" +
+                " resulted in status code 500 with message: 'Container error'";
 
         // act
-        testObject.getLambdaInput();
+        try {
+            testObject.getLambdaInput();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
+
     }
 
     ///////// Tests for "/runtime/invocation/{AwsRequestId}/response" /////////
@@ -147,12 +170,20 @@ public class LambdaIOHandlerTest {
                 .withRequestBody(equalTo(lambdaResultString))
                 .willReturn(status(400)
                         .withBody(errorString)));
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing processed output for awsRequestId awsId resulted " +
-                "in status code 400 with message: 'Bad request'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing processed output for awsRequestId awsId resulted " +
+                "in status code 400 with message: 'Bad request'";
 
         // act
-        testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        try {
+            testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
     }
 
     // 403 forbidden -- no point in continuing
@@ -166,12 +197,20 @@ public class LambdaIOHandlerTest {
                 .withRequestBody(equalTo(lambdaResultString))
                 .willReturn(status(403)
                         .withBody(errorString)));
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing processed output for awsRequestId awsId resulted " +
-                "in status code 403 with message: 'Forbidden'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing processed output for awsRequestId awsId resulted " +
+                "in status code 403 with message: 'Forbidden'";
 
         // act
-        testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        try {
+            testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
     }
 
     // 413 payload too large -- no point in continuing
@@ -185,12 +224,20 @@ public class LambdaIOHandlerTest {
                 .withRequestBody(equalTo(lambdaResultString))
                 .willReturn(status(413)
                         .withBody(errorString)));
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing processed output for awsRequestId awsId resulted " +
-                "in status code 413 with message: 'Payload too large'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing processed output for awsRequestId awsId resulted " +
+                "in status code 413 with message: 'Payload too large'";
 
         // act
-        testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        try {
+            testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
     }
 
     // 500 Container error -- requires exit
@@ -204,12 +251,20 @@ public class LambdaIOHandlerTest {
                 .withRequestBody(equalTo(lambdaResultString))
                 .willReturn(status(500)
                 .withBody(errorString)));
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing processed output for awsRequestId awsId resulted " +
-                "in status code 500 with message: 'Container error'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing processed output for awsRequestId awsId resulted " +
+                "in status code 500 with message: 'Container error'";
 
         // act
-        testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        try {
+            testObject.returnLambdaOutput(AWS_ID, lambdaResultString);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
+
+        // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
     }
 
 
@@ -246,15 +301,20 @@ public class LambdaIOHandlerTest {
                 .withHeader("Lambda-Runtime-Function-Error-Type", equalTo("Unhandled"))
                 .willReturn(status(400)
                 .withBody(awsErrorString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing invocation error for awsRequestId awsId resulted " +
-                "in status code 400 with message: 'Bad request'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing invocation error for awsRequestId awsId resulted " +
+                "in status code 400 with message: 'Bad request'";
 
         // act
-        testObject.returnInvocationError(AWS_ID, exception);
+        try {
+            testObject.returnInvocationError(AWS_ID, exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/invocation/" + AWS_ID + "/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }
@@ -272,14 +332,20 @@ public class LambdaIOHandlerTest {
                 .willReturn(status(403)
                         .withBody(awsErrorString)));
 
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing invocation error for awsRequestId awsId resulted " +
-                "in status code 403 with message: 'Forbidden'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing invocation error for awsRequestId awsId resulted " +
+                "in status code 403 with message: 'Forbidden'";
 
         // act
-        testObject.returnInvocationError(AWS_ID, exception);
+        try {
+            testObject.returnInvocationError(AWS_ID, exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/invocation/" + AWS_ID + "/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }
@@ -296,15 +362,20 @@ public class LambdaIOHandlerTest {
                 .withHeader("Lambda-Runtime-Function-Error-Type", equalTo("Unhandled"))
                 .willReturn(status(500)
                         .withBody(awsErrorString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("POSTing invocation error for awsRequestId awsId resulted " +
-                "in status code 500 with message: 'Container error'. Exiting with exception");
+        LambdaException resultingException = null;
+        String expectedMessage = "POSTing invocation error for awsRequestId awsId resulted " +
+                "in status code 500 with message: 'Container error'";
 
         // act
-        testObject.returnInvocationError(AWS_ID, exception);
+        try {
+            testObject.returnInvocationError(AWS_ID, exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/invocation/" + AWS_ID + "/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }
@@ -321,15 +392,20 @@ public class LambdaIOHandlerTest {
                 .withHeader("Content-Type", equalTo("application/json; utf-8"))
                 .withHeader("Lambda-Runtime-Function-Error-Type", equalTo("Unhandled"))
                 .willReturn(status(202)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("Runtime unable to continue.  POSTed initialization error, " +
-                "receiving status: 202");
+        LambdaException resultingException = null;
+        String expectedMessage = "Runtime unable to continue.  POSTed initialization error, " +
+                "receiving status: 202";
 
         // act
-        testObject.returnInitializationError(exception);
+        try {
+            testObject.returnInitializationError(exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/init/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }
@@ -346,15 +422,20 @@ public class LambdaIOHandlerTest {
                 .withHeader("Lambda-Runtime-Function-Error-Type", equalTo("Unhandled"))
                 .willReturn(status(403)
                 .withBody(awsErrorString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("Runtime unable to continue.  POSTed initialization error, " +
-                "receiving status: 403");
+        LambdaException resultingException = null;
+        String expectedMessage = "Runtime unable to continue.  POSTed initialization error, " +
+                "receiving status: 403";
 
         // act
-        testObject.returnInitializationError(exception);
+        try {
+            testObject.returnInitializationError(exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/init/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }
@@ -371,15 +452,20 @@ public class LambdaIOHandlerTest {
                 .withHeader("Lambda-Runtime-Function-Error-Type", equalTo("Unhandled"))
                 .willReturn(status(500)
                         .withBody(awsErrorString)));
-
-        expectedException.expect(LambdaException.class);
-        expectedException.expectMessage("Runtime unable to continue.  POSTed initialization error, " +
-                "receiving status: 500");
+        LambdaException resultingException = null;
+        String expectedMessage = "Runtime unable to continue.  POSTed initialization error, " +
+                "receiving status: 500";
 
         // act
-        testObject.returnInitializationError(exception);
+        try {
+            testObject.returnInitializationError(exception);
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
+        assertEquals(expectedMessage, resultingException.getMessage());
         verify(postRequestedFor(urlMatching("/2018-06-01/runtime/init/error"))
                 .andMatching(bodyMatchesAwsErrorFormat(exception.getClass().getName(), lambdaError)));
     }

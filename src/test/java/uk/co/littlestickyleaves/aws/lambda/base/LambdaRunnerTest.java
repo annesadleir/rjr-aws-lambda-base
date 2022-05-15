@@ -8,15 +8,13 @@ import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaIOHandler;
 import uk.co.littlestickyleaves.aws.lambda.base.api.LambdaInputWithId;
 import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
 public class LambdaRunnerTest {
 
-    @Rule
-    public ExpectedException expectedException = ExpectedException.none();
-
-    private LambdaIOHandler mockLambdaIOHandler = mock(LambdaIOHandler.class);
-    private LambdaWorker mockLambdaWorker = mock(LambdaWorker.class);
+    private final LambdaIOHandler mockLambdaIOHandler = mock(LambdaIOHandler.class);
+    private final LambdaWorker mockLambdaWorker = mock(LambdaWorker.class);
 
     private LambdaRunner testObject;
 
@@ -31,15 +29,20 @@ public class LambdaRunnerTest {
         Exception exception = new LambdaException("Could not read input");
         when(mockLambdaIOHandler.getLambdaInput()).thenThrow(exception);
         doThrow(new LambdaException("All initialization errors cause system to exit"))
-                .when(mockLambdaIOHandler).returnInitializationError(any(Exception.class));
-        expectedException.expect(LambdaException.class);
+                .when(mockLambdaIOHandler).returnInitializationError(exception);
+        LambdaException resultingException = null;
 
         // act
-        testObject.loop();
+        try {
+            testObject.loop();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
         verify(mockLambdaIOHandler).returnInitializationError(exception);
-        verifyNoMoreInteractions(mockLambdaIOHandler, mockLambdaWorker);
+        verifyNoMoreInteractions(mockLambdaWorker);
     }
 
     @Test
@@ -56,12 +59,17 @@ public class LambdaRunnerTest {
         when(mockLambdaWorker.handleRaw(rawInput)).thenThrow(lambdaFailed);
         doThrow(new LambdaException("All initialization errors cause system to exit"))
                 .when(mockLambdaIOHandler).returnInitializationError(any(Exception.class));
-        expectedException.expect(LambdaException.class);
+        LambdaException resultingException = null;
 
         // act
-        testObject.loop();
+        try {
+            testObject.loop();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
         verify(mockLambdaIOHandler).returnInvocationError(id, lambdaFailed);
         verify(mockLambdaIOHandler).returnInitializationError(testEndingException);
     }
@@ -80,12 +88,17 @@ public class LambdaRunnerTest {
         when(mockLambdaWorker.handleRaw(rawInput)).thenReturn(rawOutput);
         doThrow(new LambdaException("All initialization errors cause system to exit"))
                 .when(mockLambdaIOHandler).returnInitializationError(any(Exception.class));
-        expectedException.expect(LambdaException.class);
+        LambdaException resultingException = null;
 
         // act
-        testObject.loop();
+        try {
+            testObject.loop();
+        } catch (LambdaException lambdaException) {
+            resultingException = lambdaException;
+        }
 
         // assert
+        assertNotNull(resultingException);
         verify(mockLambdaIOHandler).returnLambdaOutput(id, rawOutput);
         verify(mockLambdaIOHandler).returnInitializationError(exception);
     }

@@ -33,6 +33,7 @@ public class LambdaRunner {
                 String result = lambdaWorker.handleRaw(lambdaInputWithId.getRawInput());
                 lambdaIOHandler.returnLambdaOutput(lambdaInputWithId.getAwsRequestId(), result);
             } catch (Exception ex) {
+                System.out.println("Received " + ex.getClass().getSimpleName() + " with message " + ex.getMessage());
                 if (lambdaInputWithId == null) {
                     lambdaIOHandler.returnInitializationError(ex);
                 } else {
