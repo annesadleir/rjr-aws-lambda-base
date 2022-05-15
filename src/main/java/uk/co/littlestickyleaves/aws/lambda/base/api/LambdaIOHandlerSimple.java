@@ -6,14 +6,18 @@ import uk.co.littlestickyleaves.aws.lambda.base.error.LambdaException;
 
 import java.io.*;
 import java.net.HttpURLConnection;
+import java.net.URI;
 import java.net.URL;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * An implementation of the LambdaIOHandler interface using Java 1.1's HttpUrlConnection.
- * (I got fed up with trying various libraries which caused GraalVM to complain, so I did this old-school implementation.)
+ * An implementation of the LambdaIOHandler interface using Java 11's HttpClient.
  * Q. proper logging sensible or not?
  */
 public class LambdaIOHandlerSimple implements LambdaIOHandler {
@@ -28,10 +32,14 @@ public class LambdaIOHandlerSimple implements LambdaIOHandler {
     private static final String INIT = "init";
     private static final String ERROR = "/error";
 
+    private final HttpClient httpClient;
     private final String runtimeApiRoot;
     private final ErrorJsonProvider errorJsonProvider;
 
-    public LambdaIOHandlerSimple(String runtimeApiEndpoint, ErrorJsonProvider errorJsonProvider) {
+    public LambdaIOHandlerSimple(HttpClient httpClient,
+                                 String runtimeApiEndpoint,
+                                 ErrorJsonProvider errorJsonProvider) {
+        this.httpClient = httpClient;
         this.runtimeApiRoot = HTTP + runtimeApiEndpoint + RUNTIME;
         this.errorJsonProvider = errorJsonProvider;
     }
@@ -39,27 +47,27 @@ public class LambdaIOHandlerSimple implements LambdaIOHandler {
     @Override
     public LambdaInputWithId getLambdaInput() throws Exception {
         try {
-            URL inputUrl = new URL(runtimeApiRoot + INVOCATION + NEXT);
+            URI inputUri = URI.create(runtimeApiRoot + INVOCATION + NEXT);
+            System.out.println("Doing GET for next input at " + inputUri.getPath());
 
-            System.out.println("Doing GET for next input at " + inputUrl.toString());
+            HttpRequest httpRequest = HttpRequest.newBuilder(inputUri).GET().build();
+            HttpResponse<String> response = httpClient.send(httpRequest,
+                    HttpResponse.BodyHandlers.ofString());
 
-            HttpURLConnection httpURLConnection = (HttpURLConnection) inputUrl.openConnection();
-            httpURLConnection.setRequestMethod("GET");
-
-            int status = httpURLConnection.getResponseCode();
+            int status = response.statusCode();
+            String body = response.body();
 
             if (status > 299) {
-                handleHttpProblem("GET for input", status, httpURLConnection);
+                throw new LambdaException("GET for input on " + inputUri + " resulted in status code " + status +
+                        " with message: '" + body + "'");
             }
 
-            String awsRequestId = httpURLConnection.getHeaderField(LAMBDA_RUNTIME_AWS_REQUEST_ID);
-
-            if (awsRequestId == null) {
-                throwException("GET for input returned no header value for " + LAMBDA_RUNTIME_AWS_REQUEST_ID);
+            Optional<String> awsRequestId = response.headers().firstValue(LAMBDA_RUNTIME_AWS_REQUEST_ID);
+            if (awsRequestId.isEmpty()) {
+                throw new LambdaException("GET for input returned no header value for " + LAMBDA_RUNTIME_AWS_REQUEST_ID);
             }
 
-            String content = contentFromHttpUrlConnection(httpURLConnection, uncheckedInputStreamFetcher());
-            return new LambdaInputWithId(awsRequestId, content);
+            return new LambdaInputWithId(awsRequestId.get(), body);
 
         } catch (IOException exception) {
             throw new LambdaException("GET for input resulted in " + exception.getClass().getSimpleName() +
@@ -69,13 +77,17 @@ public class LambdaIOHandlerSimple implements LambdaIOHandler {
 
     @Override
     public void returnLambdaOutput(String awsRequestId, String result) throws Exception {
-        URL outputUrl = new URL(runtimeApiRoot + INVOCATION + awsRequestId + RESPONSE);
-        System.out.println("POSTing result for awsRequestId " + awsRequestId + " to " + outputUrl.toString() +
+        URI outputUri = URI.create(runtimeApiRoot + INVOCATION + awsRequestId + RESPONSE);
+        System.out.println("POSTing result for awsRequestId " + awsRequestId + " to " + outputUri.getPath() +
                 "\n" + result);
 
-        HttpURLConnection httpURLConnection = setUpPost(outputUrl, result, false);
+        HttpRequest httpRequest = HttpRequest.newBuilder(outputUri)
+                .POST(HttpRequest.BodyPublishers.ofString(result, StandardCharsets.UTF_8))
+                .build();
+        HttpResponse<String> response = httpClient.send(httpRequest,
+                HttpResponse.BodyHandlers.ofString());
 
-        int status = httpURLConnection.getResponseCode();
+        int status = response.statusCode();
 
         if (status > 299) {
             handleHttpProblem("POSTing processed output for awsRequestId " + awsRequestId, status, httpURLConnection);
@@ -121,22 +133,22 @@ public class LambdaIOHandlerSimple implements LambdaIOHandler {
         }
     }
 
-    private void handleHttpProblem(String action, int statusCode, HttpURLConnection httpURLConnection) throws LambdaException {
-        String errorMessage = action + " resulted in status code " + statusCode;
-        try {
-            String errorContent = contentFromHttpUrlConnection(httpURLConnection, HttpURLConnection::getErrorStream);
-            errorMessage += " with message: '" + errorContent;
-        } catch (IOException e) {
-            errorMessage += ": unable to read message because of " + e.getClass().getSimpleName() + " with message '" +
-                    e.getMessage();
-        }
-        errorMessage += "'. Exiting with exception";
+    private void handleHttpProblem(String action, int statusCode, HttpResponse<String> response
+//                                   HttpURLConnection httpURLConnection
+    ) throws LambdaException {
+        String errorMessage = action + " resulted in status code " + statusCode +
+                " with message: '" + response.body() + "'. Exiting with exception";
         throwException(errorMessage);
     }
 
     private void throwException(String errorMessage) throws LambdaException {
         System.out.println(errorMessage); // todo proper logging?
         throw new LambdaException(errorMessage);
+    }
+
+    private LambdaException exception(String errorMessage) throws LambdaException {
+        System.out.println(errorMessage); // todo proper logging?
+        return new LambdaException(errorMessage);
     }
 
     private HttpURLConnection setUpPost(URL url, String payloadString, boolean error) throws IOException {
