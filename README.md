@@ -1,7 +1,7 @@
 # rjr-aws-lambda-base
 Implements the API for a lambda layer: polls for input text, processes it, and posts back the result.
 It has the concept of a LambdaWorker, which is the class that does the work specific to that lambda,
-analogous to the RequestHandler when using the standard AWS `java8` runtime.
+analogous to the RequestHandler when using the standard AWS java runtime.
 
 This is just the runtime part.  To see how to use it, look at the [rjr-aws-lambda-dummy](https://github.com/annesadleir/rjr-aws-lambda-dummy) repo 
 which has an example with a piece of code that just repeats Strings. 
