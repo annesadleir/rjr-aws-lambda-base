@@ -7,5 +7,5 @@ package uk.co.littlestickyleaves.aws.lambda.base;
  */
 @FunctionalInterface
 public interface LambdaWorker {
-    String handleRaw(String rawInput);
+    String handleRaw(String rawInput) throws Exception;
 }
